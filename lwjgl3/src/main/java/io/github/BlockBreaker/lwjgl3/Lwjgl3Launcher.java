@@ -17,7 +17,7 @@ public class Lwjgl3Launcher {
 
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration() {
         Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
-        configuration.setTitle("BlockBreaker");
+        configuration.setTitle("Knockoff BlockBreaker");
         configuration.useVsync(true);
         configuration.setResizable(false);
         if (io.github.BlockBreaker.Constants.Debuging.debugEnableFramerateSlowdown) {configuration.setForegroundFPS(15);}

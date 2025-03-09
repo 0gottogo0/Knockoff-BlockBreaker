@@ -9,7 +9,7 @@ public class Constants {
 
   public static final class Speeds {
     public static final float paddleSpeed = 200;
-    public static final float ballSpeed = 100;
+    public static final float ballSpeed = 200;
   }
 
   public static final class Sizes {
@@ -19,7 +19,6 @@ public class Constants {
   }
 
   public static final class Debuging {
-    public static final boolean debugEnable = false;
     public static final boolean debugEnablePrinting = false;
     public static final boolean debugEnableFramerateSlowdown = false;
   }

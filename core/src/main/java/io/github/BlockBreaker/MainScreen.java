@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -27,15 +27,18 @@ public class MainScreen implements Screen {
   Sprite paddle;
   Sprite ball;
 
-  World world;
   SpriteBatch mainSpriteBatch;
   SpriteBatch pauseSpriteBatch;
   ShapeRenderer pauseRenderer;
   BitmapFont pauseFont;
   FitViewport viewport;
+
+  Rectangle blockRectangle;
+  Rectangle paddleRectangle;
+  Rectangle ballRectangle;
   
-  ShapeRenderer debugRenderer;
   SpriteBatch debugSpriteBatch;
+  ShapeRenderer debugRenderer;
   BitmapFont debugFont;
 
   Array<Sprite> blocks;
@@ -45,7 +48,7 @@ public class MainScreen implements Screen {
   float ballY;
 
   float ballXVelocity;
-  float ballYVelocity;
+  boolean ballVelocityDown;
 
   boolean pause;
   boolean launchedBall;
@@ -64,6 +67,10 @@ public class MainScreen implements Screen {
     pauseRenderer = new ShapeRenderer();
     pauseFont = new BitmapFont();
     viewport = new FitViewport(180, 180);
+
+    blockRectangle = new Rectangle();
+    paddleRectangle = new Rectangle();
+    ballRectangle = new Rectangle();
     
     debugRenderer = new ShapeRenderer();
     debugSpriteBatch = new SpriteBatch();
@@ -71,12 +78,13 @@ public class MainScreen implements Screen {
 
     blocks = new Array<>();
 
+    // Set ball and paddle to the center of the screen
     paddleX = 74;
     ballX = paddleX + 14;
     ballY = paddleSize + 2;
 
-    ballXVelocity = ballSpeed;
-    ballYVelocity = ballSpeed;
+    ballXVelocity = 0;
+    ballVelocityDown = false;
 
     pause = true;
     launchedBall = false;
@@ -92,6 +100,7 @@ public class MainScreen implements Screen {
     ScreenUtils.clear(BackroundColorR / 255, BackroundColorG / 255, BackroundColorB / 255, 1);
 
     viewport.apply(true);
+
     mainSpriteBatch.setProjectionMatrix(viewport.getCamera().combined);
     mainSpriteBatch.begin();
     mainSpriteBatch.draw(paddle, paddleX, 1, paddleSize * 4, paddleSize);
@@ -104,17 +113,16 @@ public class MainScreen implements Screen {
     mainSpriteBatch.end();
 
     // Debug
-    if (debugEnable) {
-      if (debugEnablePrinting) {
-        debugSpriteBatch.setProjectionMatrix(viewport.getCamera().combined);
-        debugSpriteBatch.begin();
-        debugFont.getData().setScale(0.4f);
-        debugFont.draw(debugSpriteBatch, "Paddle X: " + paddleX, paddleX, 14);
-        debugFont.draw(debugSpriteBatch, "Ball X: " + ballX, 1, 6);
-        debugFont.draw(debugSpriteBatch, "Ball X Vel: " + ballXVelocity, 1, 12);
-        debugFont.draw(debugSpriteBatch, "Ball Y VeL: " + ballYVelocity, 1, 18);
-        debugSpriteBatch.end();
-      }
+    if (debugEnablePrinting) {
+      debugSpriteBatch.setProjectionMatrix(viewport.getCamera().combined);
+      debugSpriteBatch.begin();
+      debugFont.getData().setScale(0.4f);
+      debugFont.draw(debugSpriteBatch, "Paddle X: " + paddleX, paddleX, 14);
+      debugFont.draw(debugSpriteBatch, "Ball X: " + ballX, 1, 6);
+      debugFont.draw(debugSpriteBatch, "Ball Y: " + ballY, 1, 12);
+      debugFont.draw(debugSpriteBatch, "Ball X Vel: " + ballXVelocity, 1, 18);
+      debugFont.draw(debugSpriteBatch, "Ball Y Travel: " + ballVelocityDown, 1, 24);
+      debugSpriteBatch.end();
     }
 
     if (pause) {
@@ -135,7 +143,6 @@ public class MainScreen implements Screen {
       if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
         resume();
       }
-      
       return;
     }
 
@@ -170,26 +177,34 @@ public class MainScreen implements Screen {
     if (pause) {
       return;
     }
+    
+    paddleRectangle.set(paddleX, 1, paddleSize * 4, paddleSize);
+    ballRectangle.set(ballX, ballY, ballSize, ballSize);
 
     if (!launchedBall) {
       ballX = paddleX + 14;
       ballY = paddleSize + 2;
 
-      ballXVelocity = ballSpeed;
-      ballYVelocity = ballSpeed;  
+      ballXVelocity = ballSpeed / 2;
+      ballVelocityDown = false;
 
       return;
     }
 
     collisionDetection();
 
-    // TODO: Add function to make ball stay at constant speed
+    Math.clamp(ballXVelocity, -ballSpeed + 5, ballSpeed - 5);
     ballX += ballXVelocity * delta;
-    ballY += ballYVelocity * delta;
+
+    if (ballVelocityDown) {
+      ballY += -(ballSpeed - Math.abs(ballXVelocity)) * delta;
+    } else {
+      ballY += (ballSpeed - Math.abs(ballXVelocity)) * delta;
+    }
   }
 
   public void collisionDetection() {
-    if (ballX > 177) {
+    if (ballX > 175) {
       ballXVelocity = -ballXVelocity;
       ballX -= 1;
     }
@@ -199,20 +214,18 @@ public class MainScreen implements Screen {
       ballX += 1;
     }
 
-    if (ballY > 177) {
-      ballYVelocity = -ballYVelocity;
+    if (ballY > 175) {
+      ballVelocityDown = true;
       ballY -= 1;
     }
     
-    if (ballY < 0) {
-      ballYVelocity = -ballYVelocity;
+    if (ballY < 1) {
       launchedBall = false;
     }
 
-    // TODO: Impliment some other function, I beleve an overlap function or somthing exists
-    if (ballX >= (paddleX - 1) && ballX <= (paddleX + 1) + (paddleSize * 4) && ballY < (paddleSize + 1)) {
-      ballYVelocity = -ballYVelocity;
-      float offset = (ballX - (paddleX + (paddleSize * 2))) * 10;
+    if (paddleRectangle.overlaps(ballRectangle)) {
+      ballVelocityDown = false;
+      float offset = (ballX - (paddleX + (paddleSize * 2))) * 4;
       ballXVelocity += offset;
       offset = 0;
     }
@@ -260,7 +273,19 @@ public class MainScreen implements Screen {
   @Override
   public void hide() {}
 
-  // TODO: Use dispose function for memory cleanup
   @Override
-  public void dispose() {}
+  public void dispose() {
+    blockTexture.dispose();
+    paddleTexture.dispose();
+    ballTexture.dispose();
+    
+    mainSpriteBatch.dispose();
+    pauseSpriteBatch.dispose();
+    pauseRenderer.dispose();
+    pauseFont.dispose();
+
+    debugSpriteBatch.dispose();
+    debugRenderer.dispose();
+    debugFont.dispose();
+  }
 }
