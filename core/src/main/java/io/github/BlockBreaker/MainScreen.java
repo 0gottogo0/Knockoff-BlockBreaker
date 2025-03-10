@@ -134,6 +134,8 @@ public class MainScreen implements Screen {
       pauseSpriteBatch.begin();
       pauseFont.getData().setScale(1.2f);
       pauseFont.draw(pauseSpriteBatch, "Paused", 60, 100);
+      pauseFont.getData().setScale(0.4f);
+      pauseFont.draw(pauseSpriteBatch, "R to Reset", 75, 80);
       pauseSpriteBatch.end();
     }
   }
@@ -142,6 +144,10 @@ public class MainScreen implements Screen {
     if (pause) {
       if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
         resume();
+      } else if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+        launchedBall = false;
+        paddleX = 74;
+        resetBlocks();
       }
       return;
     }
@@ -193,7 +199,7 @@ public class MainScreen implements Screen {
 
     collisionDetection();
 
-    Math.clamp(ballXVelocity, -ballSpeed + 5, ballSpeed - 5);
+    Math.clamp(ballXVelocity, -ballSpeed + 15, ballSpeed - 15);
     ballX += ballXVelocity * delta;
 
     if (ballVelocityDown) {
@@ -223,11 +229,34 @@ public class MainScreen implements Screen {
       launchedBall = false;
     }
 
+    for (int i = blocks.size - 1; i >= 0; i--) {
+      Sprite blockSprite = blocks.get(i);
+      blockRectangle.set(blockSprite.getX() - 0.5f, blockSprite.getY() - 0.5f, (blockSize * 2) + 1, blockSize + 1);
+
+      if (ballRectangle.overlaps(blockRectangle)) {
+        blockCollision(blockSprite);
+        blocks.removeIndex(i);
+      }
+    }
+
     if (paddleRectangle.overlaps(ballRectangle)) {
       ballVelocityDown = false;
-      float offset = (ballX - (paddleX + (paddleSize * 2))) * 4;
+      float offset = (ballX - (paddleX + (paddleSize * 2))) * 3;
       ballXVelocity += offset;
       offset = 0;
+    }
+  }
+
+  // TODO: This sucks balls, fix it
+  public void blockCollision(Sprite block) {
+    if ((ballX + 2) >= block.getX() && (ballX - 2) <= (block.getX() + (blockSize * 2))) {
+      if (Math.floor(ballY) <= block.getY()) {
+        ballVelocityDown = true;
+      } else if (Math.floor(ballY) > block.getY()) {
+        ballVelocityDown = false;
+      }
+    } else {
+      ballXVelocity = -ballXVelocity;
     }
   }
 
