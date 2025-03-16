@@ -19,7 +19,7 @@ public class Constants {
   }
 
   public static final class Debuging {
-    public static final boolean debugEnablePrinting = false;
+    public static final boolean debugEnablePrinting = true;
     public static final boolean debugEnableFramerateSlowdown = false;
   }
 }

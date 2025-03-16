@@ -255,9 +255,7 @@ public class MainScreen implements Screen {
 
     if (paddleRectangle.overlaps(ballRectangle)) {
       ballVelocityDown = false;
-      float offset = (ballX - (paddleX + (paddleSize * 2))) * 3;
-      ballXVelocity += offset;
-      offset = 0;
+      ballXVelocity = (ballX - (paddleX + (paddleSize * 2))) * 10;
     }
   }
 
