@@ -2,9 +2,9 @@ package io.github.BlockBreaker;
 
 public class Constants {
   public static final class RGB {
-    public static final float BackroundColorR = 50;
-    public static final float BackroundColorG = 50;
-    public static final float BackroundColorB = 50;
+    public static final float backroundColorR = 50;
+    public static final float backroundColorG = 50;
+    public static final float backroundColorB = 50;
   }
 
   public static final class Speeds {
@@ -19,6 +19,7 @@ public class Constants {
   }
 
   public static final class Debuging {
+    public static final boolean debugEnableKeys = true;
     public static final boolean debugEnablePrinting = true;
     public static final boolean debugEnableFramerateSlowdown = false;
   }

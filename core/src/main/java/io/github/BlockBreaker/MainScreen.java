@@ -50,10 +50,12 @@ public class MainScreen implements Screen {
   float ballXVelocity;
   boolean ballVelocityDown;
 
+  boolean debugSlowDelta;
+  boolean debugFastDelta;
+
+  int lives;
   boolean pause;
   boolean launchedBall;
-
-  boolean debugSlowDelta;
 
   @Override
   public void show() {
@@ -88,10 +90,12 @@ public class MainScreen implements Screen {
     ballXVelocity = 0;
     ballVelocityDown = false;
 
+    lives = 3;
     pause = true;
     launchedBall = false;
 
     debugSlowDelta = false;
+    debugFastDelta = false;
 
     resetBlocks();
   }
@@ -99,9 +103,9 @@ public class MainScreen implements Screen {
   @Override
   public void render(float delta) {
     input(delta);
-    stepPhysiscs(delta, debugSlowDelta);
+    stepPhysiscs(delta);
 
-    ScreenUtils.clear(BackroundColorR / 255, BackroundColorG / 255, BackroundColorB / 255, 1);
+    ScreenUtils.clear(backroundColorR / 255, backroundColorG / 255, backroundColorB / 255, 1);
 
     viewport.apply(true);
 
@@ -109,6 +113,19 @@ public class MainScreen implements Screen {
     mainSpriteBatch.begin();
     mainSpriteBatch.draw(paddle, paddleX, 1, paddleSize * 4, paddleSize);
     mainSpriteBatch.draw(ball, ballX, ballY, ballSize, ballSize);
+
+    // This just stucks
+    if (lives >= 1) {
+      mainSpriteBatch.draw(ball, 3, 173, ballSize, ballSize);
+    }
+
+    if (lives >= 2) {
+      mainSpriteBatch.draw(ball, 10, 173, ballSize, ballSize);
+    }
+
+    if (lives >= 3) {
+      mainSpriteBatch.draw(ball, 17, 173, ballSize, ballSize);
+    }
 
     for (Sprite blockSprite : blocks) {
       blockSprite.draw(mainSpriteBatch);
@@ -126,6 +143,7 @@ public class MainScreen implements Screen {
       debugFont.draw(debugSpriteBatch, "Ball Y: " + ballY, 1, 12);
       debugFont.draw(debugSpriteBatch, "Ball X Vel: " + ballXVelocity, 1, 18);
       debugFont.draw(debugSpriteBatch, "Ball Y Travel: " + ballVelocityDown, 1, 24);
+      debugFont.draw(debugSpriteBatch, "Lives: " + lives, 1, 30);
       debugSpriteBatch.end();
     }
 
@@ -142,6 +160,10 @@ public class MainScreen implements Screen {
       pauseFont.draw(pauseSpriteBatch, "R to Reset", 75, 80);
       pauseSpriteBatch.end();
     }
+
+    if (lives <= 0 && !launchedBall) {
+      resetGame();
+    }
   }
   
   public void input(float delta) {
@@ -149,21 +171,27 @@ public class MainScreen implements Screen {
       if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
         resume();
       } else if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
-        launchedBall = false;
-        paddleX = 74;
-        resetBlocks();
+        resetGame();
       }
       return;
     }
 
+    if (debugSlowDelta) {
+      delta = delta / 20;
+    } else if (debugFastDelta) {
+      delta = delta * 10;
+    }
+ 
     if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
       paddleX += paddleSpeed * delta;
     } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) {
       paddleX += -paddleSpeed * delta;
     }
 
-    if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-      launchBall();
+    if (!launchedBall) {
+      if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        launchBall();
+      }
     }
 
     if (paddleX < 1) {
@@ -176,12 +204,20 @@ public class MainScreen implements Screen {
       pause();
     }
 
-    if (Gdx.input.isKeyPressed(Input.Keys.T)) {
-      debugSlowDelta = true;
-    } else {
-      debugSlowDelta = false;
+    if (!debugEnableKeys) {
+      return;
     }
 
+    if (Gdx.input.isKeyPressed(Input.Keys.T)) {
+      debugSlowDelta = true;
+      debugFastDelta = false;
+    } else if (Gdx.input.isKeyPressed(Input.Keys.Y)) {
+      debugSlowDelta = false;
+      debugFastDelta = true;
+    } else {
+      debugSlowDelta = false;
+      debugFastDelta = false;
+    }
   }
 
   @Override
@@ -189,13 +225,15 @@ public class MainScreen implements Screen {
     viewport.update(width, height, true);
   }
 
-  public void stepPhysiscs(float delta, boolean debugSlowDelta) {
+  public void stepPhysiscs(float delta) {
     if (pause) {
       return;
     }
 
     if (debugSlowDelta) {
       delta = delta / 20;
+    } else if (debugFastDelta) {
+      delta = delta * 10;
     }
     
     paddleRectangle.set(paddleX, 1, paddleSize * 4, paddleSize);
@@ -213,7 +251,7 @@ public class MainScreen implements Screen {
 
     collisionDetection();
 
-    Math.clamp(ballXVelocity, -ballSpeed + 15, ballSpeed - 15);
+    Math.clamp(ballXVelocity, (-ballSpeed) + 15, ballSpeed - 15);
     ballX += ballXVelocity * delta;
 
     if (ballVelocityDown) {
@@ -255,11 +293,13 @@ public class MainScreen implements Screen {
 
     if (paddleRectangle.overlaps(ballRectangle)) {
       ballVelocityDown = false;
-      ballXVelocity = (ballX - (paddleX + (paddleSize * 2))) * 10;
+      ballXVelocity = ((ballX + blockSize / 2) - (paddleX + (paddleSize * 2))) * 7;
     }
   }
 
   public void blockCollision(Sprite block) {
+
+    // Calculate this with slight room for error
     if ((ballX + ballSize) - block.getX() < ((blockSize * 2) / 6) || ballX - (block.getX() + (blockSize * 2)) > -((blockSize * 2) / 6)) {
       ballXVelocity = -ballXVelocity;
     } else if (ballRectangle.getY() < block.getY() + (blockSize / 2)) {
@@ -292,10 +332,18 @@ public class MainScreen implements Screen {
 
   public void launchBall() {
     launchedBall = true;
+    --lives;
 
     if (MathUtils.randomBoolean()) {
       ballXVelocity = -ballXVelocity;
     }
+  }
+
+  public void resetGame() {
+    launchedBall = false;
+    lives = 3;
+    paddleX = 74;
+    resetBlocks();
   }
 
   @Override
