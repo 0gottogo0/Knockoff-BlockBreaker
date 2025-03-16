@@ -53,6 +53,8 @@ public class MainScreen implements Screen {
   boolean pause;
   boolean launchedBall;
 
+  boolean debugSlowDelta;
+
   @Override
   public void show() {
     blockTexture = new Texture("Block.png");
@@ -89,13 +91,15 @@ public class MainScreen implements Screen {
     pause = true;
     launchedBall = false;
 
+    debugSlowDelta = false;
+
     resetBlocks();
   }
 
   @Override
   public void render(float delta) {
     input(delta);
-    stepPhysiscs(delta);
+    stepPhysiscs(delta, debugSlowDelta);
 
     ScreenUtils.clear(BackroundColorR / 255, BackroundColorG / 255, BackroundColorB / 255, 1);
 
@@ -172,6 +176,12 @@ public class MainScreen implements Screen {
       pause();
     }
 
+    if (Gdx.input.isKeyPressed(Input.Keys.T)) {
+      debugSlowDelta = true;
+    } else {
+      debugSlowDelta = false;
+    }
+
   }
 
   @Override
@@ -179,9 +189,13 @@ public class MainScreen implements Screen {
     viewport.update(width, height, true);
   }
 
-  public void stepPhysiscs(float delta) {
+  public void stepPhysiscs(float delta, boolean debugSlowDelta) {
     if (pause) {
       return;
+    }
+
+    if (debugSlowDelta) {
+      delta = delta / 20;
     }
     
     paddleRectangle.set(paddleX, 1, paddleSize * 4, paddleSize);
@@ -247,16 +261,13 @@ public class MainScreen implements Screen {
     }
   }
 
-  // TODO: This sucks balls, fix it
   public void blockCollision(Sprite block) {
-    if ((ballX + 2) >= block.getX() && (ballX - 2) <= (block.getX() + (blockSize * 2))) {
-      if (Math.floor(ballY) <= block.getY()) {
-        ballVelocityDown = true;
-      } else if (Math.floor(ballY) > block.getY()) {
-        ballVelocityDown = false;
-      }
-    } else {
+    if ((ballX + ballSize) - block.getX() < ((blockSize * 2) / 6) || ballX - (block.getX() + (blockSize * 2)) > -((blockSize * 2) / 6)) {
       ballXVelocity = -ballXVelocity;
+    } else if (ballRectangle.getY() < block.getY() + (blockSize / 2)) {
+      ballVelocityDown = true;
+    } else {
+      ballVelocityDown = false;
     }
   }
 

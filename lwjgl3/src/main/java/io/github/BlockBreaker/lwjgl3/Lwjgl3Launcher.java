@@ -23,7 +23,7 @@ public class Lwjgl3Launcher {
         if (io.github.BlockBreaker.Constants.Debuging.debugEnableFramerateSlowdown) {configuration.setForegroundFPS(15);}
         else {configuration.setForegroundFPS(Lwjgl3ApplicationConfiguration.getDisplayMode().refreshRate + 1);}
         configuration.setWindowedMode(1080, 1080);
-        configuration.setWindowIcon("libgdx128.png", "libgdx64.png", "libgdx32.png", "libgdx16.png");
+        configuration.setWindowIcon("BallSmall.png");
         return configuration;
     }
 }
