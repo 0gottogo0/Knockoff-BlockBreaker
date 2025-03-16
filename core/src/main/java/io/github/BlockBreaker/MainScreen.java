@@ -56,6 +56,7 @@ public class MainScreen implements Screen {
   int lives;
   boolean pause;
   boolean launchedBall;
+  boolean toggleCollision;
 
   @Override
   public void show() {
@@ -89,19 +90,22 @@ public class MainScreen implements Screen {
 
     ballXVelocity = 0;
     ballVelocityDown = false;
+    
+    debugSlowDelta = false;
+    debugFastDelta = false;
 
     lives = 3;
     pause = true;
     launchedBall = false;
-
-    debugSlowDelta = false;
-    debugFastDelta = false;
+    toggleCollision = true;
 
     resetBlocks();
   }
 
   @Override
   public void render(float delta) {
+    toggleCollision = true;
+
     input(delta);
     stepPhysiscs(delta);
 
@@ -144,6 +148,8 @@ public class MainScreen implements Screen {
       debugFont.draw(debugSpriteBatch, "Ball X Vel: " + ballXVelocity, 1, 18);
       debugFont.draw(debugSpriteBatch, "Ball Y Travel: " + ballVelocityDown, 1, 24);
       debugFont.draw(debugSpriteBatch, "Lives: " + lives, 1, 30);
+      debugFont.draw(debugSpriteBatch, "Array Size: " + blocks.size, 1, 36);
+      debugFont.draw(debugSpriteBatch, "Collisiont: " + toggleCollision, 1, 42);
       debugSpriteBatch.end();
     }
 
@@ -163,6 +169,10 @@ public class MainScreen implements Screen {
 
     if (lives <= 0 && !launchedBall) {
       resetGame();
+    }
+
+    if (blocks.size <= 0) {
+      resetBlocks();
     }
   }
   
@@ -288,6 +298,7 @@ public class MainScreen implements Screen {
       if (ballRectangle.overlaps(blockRectangle)) {
         blockCollision(blockSprite);
         blocks.removeIndex(i);
+        toggleCollision = false;
       }
     }
 
@@ -299,8 +310,14 @@ public class MainScreen implements Screen {
 
   public void blockCollision(Sprite block) {
 
+    if (!toggleCollision) {
+      return;
+    }
+
+    toggleCollision = false;
+
     // Calculate this with slight room for error
-    if ((ballX + ballSize) - block.getX() < ((blockSize * 2) / 6) || ballX - (block.getX() + (blockSize * 2)) > -((blockSize * 2) / 6)) {
+    if ((ballX + ballSize) - block.getX() < ballSize || ballX - (block.getX() + (blockSize * 2)) > -ballSize) {
       ballXVelocity = -ballXVelocity;
     } else if (ballRectangle.getY() < block.getY() + (blockSize / 2)) {
       ballVelocityDown = true;
