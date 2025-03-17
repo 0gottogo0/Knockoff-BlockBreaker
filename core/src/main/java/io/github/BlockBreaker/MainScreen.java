@@ -53,6 +53,7 @@ public class MainScreen implements Screen {
   boolean debugSlowDelta;
   boolean debugFastDelta;
 
+  int level;
   int lives;
   boolean pause;
   boolean launchedBall;
@@ -94,6 +95,7 @@ public class MainScreen implements Screen {
     debugSlowDelta = false;
     debugFastDelta = false;
 
+    level = 0;
     lives = 3;
     pause = true;
     launchedBall = false;
@@ -105,6 +107,14 @@ public class MainScreen implements Screen {
   @Override
   public void render(float delta) {
     toggleCollision = true;
+
+    if (debugSlowDelta) {
+      delta = delta / 20;
+    } else if (debugFastDelta) {
+      delta = delta * 10;
+    }
+
+    delta = delta * (level + 1);
 
     input(delta);
     stepPhysiscs(delta);
@@ -148,8 +158,10 @@ public class MainScreen implements Screen {
       debugFont.draw(debugSpriteBatch, "Ball X Vel: " + ballXVelocity, 1, 18);
       debugFont.draw(debugSpriteBatch, "Ball Y Travel: " + ballVelocityDown, 1, 24);
       debugFont.draw(debugSpriteBatch, "Lives: " + lives, 1, 30);
-      debugFont.draw(debugSpriteBatch, "Array Size: " + blocks.size, 1, 36);
-      debugFont.draw(debugSpriteBatch, "Collisiont: " + toggleCollision, 1, 42);
+      debugFont.draw(debugSpriteBatch, "Level: " + level, 1, 36);
+      debugFont.draw(debugSpriteBatch, "Array Size: " + blocks.size, 1, 42);
+      debugFont.draw(debugSpriteBatch, "Collisiont: " + toggleCollision, 1, 48);
+      debugFont.draw(debugSpriteBatch, "Delta: " + delta, 1, 54);
       debugSpriteBatch.end();
     }
 
@@ -173,6 +185,7 @@ public class MainScreen implements Screen {
 
     if (blocks.size <= 0) {
       resetBlocks();
+      ++level;
     }
   }
   
@@ -184,12 +197,6 @@ public class MainScreen implements Screen {
         resetGame();
       }
       return;
-    }
-
-    if (debugSlowDelta) {
-      delta = delta / 20;
-    } else if (debugFastDelta) {
-      delta = delta * 10;
     }
  
     if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) {
@@ -228,6 +235,14 @@ public class MainScreen implements Screen {
       debugSlowDelta = false;
       debugFastDelta = false;
     }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.U)) {
+      ++level;
+    }
+
+    if (Gdx.input.isKeyJustPressed(Input.Keys.J)) {
+      --level;
+    }
   }
 
   @Override
@@ -238,12 +253,6 @@ public class MainScreen implements Screen {
   public void stepPhysiscs(float delta) {
     if (pause) {
       return;
-    }
-
-    if (debugSlowDelta) {
-      delta = delta / 20;
-    } else if (debugFastDelta) {
-      delta = delta * 10;
     }
     
     paddleRectangle.set(paddleX, 1, paddleSize * 4, paddleSize);
@@ -358,6 +367,7 @@ public class MainScreen implements Screen {
 
   public void resetGame() {
     launchedBall = false;
+    level = 0;
     lives = 3;
     paddleX = 74;
     resetBlocks();
