@@ -28,6 +28,7 @@ public class MainScreen implements Screen {
   Sprite ball;
 
   SpriteBatch mainSpriteBatch;
+  BitmapFont mainFont;
   SpriteBatch pauseSpriteBatch;
   ShapeRenderer pauseRenderer;
   BitmapFont pauseFont;
@@ -53,6 +54,7 @@ public class MainScreen implements Screen {
   boolean debugSlowDelta;
   boolean debugFastDelta;
 
+  int score;
   int level;
   int lives;
   boolean pause;
@@ -69,6 +71,7 @@ public class MainScreen implements Screen {
     ball = new Sprite(ballTexture);
     
     mainSpriteBatch = new SpriteBatch();
+    mainFont = new BitmapFont();
     pauseSpriteBatch = new SpriteBatch();
     pauseRenderer = new ShapeRenderer();
     pauseFont = new BitmapFont();
@@ -95,6 +98,7 @@ public class MainScreen implements Screen {
     debugSlowDelta = false;
     debugFastDelta = false;
 
+    score = 0;
     level = 0;
     lives = 3;
     pause = true;
@@ -125,20 +129,22 @@ public class MainScreen implements Screen {
 
     mainSpriteBatch.setProjectionMatrix(viewport.getCamera().combined);
     mainSpriteBatch.begin();
+    mainFont.getData().setScale(0.5f);
+    mainFont.draw(mainSpriteBatch, "Score: " + score, 3, 176);
     mainSpriteBatch.draw(paddle, paddleX, 1, paddleSize * 4, paddleSize);
     mainSpriteBatch.draw(ball, ballX, ballY, ballSize, ballSize);
 
     // This just stucks
     if (lives >= 1) {
-      mainSpriteBatch.draw(ball, 3, 173, ballSize, ballSize);
+      mainSpriteBatch.draw(ball, 173, 173, ballSize, ballSize);
     }
 
     if (lives >= 2) {
-      mainSpriteBatch.draw(ball, 10, 173, ballSize, ballSize);
+      mainSpriteBatch.draw(ball, 166, 173, ballSize, ballSize);
     }
 
     if (lives >= 3) {
-      mainSpriteBatch.draw(ball, 17, 173, ballSize, ballSize);
+      mainSpriteBatch.draw(ball, 159, 173, ballSize, ballSize);
     }
 
     for (Sprite blockSprite : blocks) {
@@ -186,6 +192,7 @@ public class MainScreen implements Screen {
     if (blocks.size <= 0) {
       resetBlocks();
       ++level;
+      score = score + 125;
     }
   }
   
@@ -307,13 +314,14 @@ public class MainScreen implements Screen {
       if (ballRectangle.overlaps(blockRectangle)) {
         blockCollision(blockSprite);
         blocks.removeIndex(i);
+        score = score + 50;
         toggleCollision = false;
       }
     }
 
     if (paddleRectangle.overlaps(ballRectangle)) {
       ballVelocityDown = false;
-      ballXVelocity = ((ballX + blockSize / 2) - (paddleX + (paddleSize * 2))) * 7;
+      ballXVelocity = ((ballX + blockSize / 2) - (paddleX + (paddleSize * 2))) * (level + 1);
     }
   }
 
@@ -367,6 +375,7 @@ public class MainScreen implements Screen {
 
   public void resetGame() {
     launchedBall = false;
+    score = 0;
     level = 0;
     lives = 3;
     paddleX = 74;
